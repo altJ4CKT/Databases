@@ -26,11 +26,24 @@ class Database:
     def printAll(self, tableName: str):
         printTwoDimArray(self.readAll(tableName))
 
-    def createTable(self, tableName: str, tableFields: list[str]):
+    def createTable(self, tableName: str, tableFields: list[str]) -> None:
         db = sqlite3.connect(self.databaseRef)
         db.execute("CREATE TABLE " + tableName + " (" + ", ".join(tableFields) + ")")
         db.commit()
         db.close()
+    
+    def createTableIfNotExists(self, tableName: str, tableFields: list[str]) -> None:
+        db = sqlite3.connect(self.databaseRef)
+        db.execute("CREATE TABLE IF NOT EXISTS " + tableName + " (" + ", ".join(tableFields) + ")")
+        db.commit()
+        db.close()
+
+    def insertIntoTable(self, tableName: str, data: list[any]) -> bool:
+        db = sqlite3.connect(self.databaseRef)
+        db.execute("INSERT INTO " + tableName + " VALUES (" + ", ".join(["?" for _ in data]) + ")", data)
+        db.commit()
+        db.close()
+        return True
 
 
 class DatabaseLikedSongs(Database):
@@ -51,7 +64,11 @@ class DatabaseLikedSongs(Database):
     def printTracksByArtist(self, givenArtist: str):
         printTwoDimArray(self.readTracksByArtist(givenArtist))
 
+    def addNewTrack(self, trackName: str, artistName: str, albumName: str, albumArtistName: str, trackNumber: int, trackDuration: int, explicit: bool, trackPreviewURL: str = None) -> bool:
+        return self.insertIntoTable("Tracks", [trackName, artistName, albumName, albumArtistName, trackNumber, trackDuration, explicit, trackPreviewURL])
 
+    def addNewAlbum(self, albumName: str, albumArtistName: str, albumArtUrl: str, albumReleaseDate: str) -> bool:
+        return self.insertIntoTable("Albums", [albumName, albumArtistName, albumArtUrl, albumReleaseDate])
 
 
 db1: DatabaseLikedSongs = DatabaseLikedSongs("./Liked Songs.db")
